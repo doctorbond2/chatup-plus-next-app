@@ -1,5 +1,4 @@
-export interface User {
-  id: string;
-  age: number;
-  name: string;
+import { User as PrismaUser } from '@prisma/client';
+export interface User extends PrismaUser {
+  fullName: string;
 }
