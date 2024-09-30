@@ -1,12 +1,12 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { Todo } from '@/types/Todo';
+import { Todo } from '@/models/types/Todo';
 import prisma from '@/lib/prisma';
-import { error500 } from '../error';
+import ResponseError from '@/models/classes/responseError';
 export async function CreateTodo(req: NextRequest) {
   try {
     const body: Todo = await req.json();
     if (!body.name) {
-      return NextResponse.json({ message: 'Invalid body' }, { status: 400 });
+      return ResponseError.default.badRequest();
     }
 
     body.completed = false;
@@ -14,6 +14,6 @@ export async function CreateTodo(req: NextRequest) {
     return NextResponse.json(body, { status: 201 });
   } catch (error) {
     console.error(error);
-    return error500();
+    return ResponseError.default.internalServerError();
   }
 }
