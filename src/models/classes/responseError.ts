@@ -9,12 +9,6 @@ type GetError = (
   message?: string
 ) => ReturnType<typeof NextResponse.json>;
 const createError = (statusCode: Codes, message?: string) => {
-  //   if (res && (res as AxiosResponse).data) {
-  //     console.error('Response Error Data: ', (res as AxiosResponse).data);
-  //   } else if (res) {
-  //     console.error('Response (No Data): ', res);
-  //   }
-
   return NextResponse.json(
     { message: message || Messages[statusCode] },
     { status: statusCode }

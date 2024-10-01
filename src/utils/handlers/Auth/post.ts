@@ -6,58 +6,63 @@ import { UserFrontend } from '@/models/types/User';
 import { ValidationMessages as M } from '@/models/enums/errorMessages';
 import { comparePassword } from '@/utils/helpers/auth';
 import { veryifyRegisterInformation } from '@/utils/helpers/auth';
-import { verifyToken, verifyRefreshToken } from '@/utils/helpers/auth';
+import { verifyRefreshToken } from '@/utils/helpers/auth';
 import prisma from '@/lib/prisma';
 import { generateToken, generateRefreshToken } from '@/utils/helpers/auth';
 import LOCAL_STORAGE from '@/models/classes/localStorage';
-import { JwtPayload } from 'jsonwebtoken';
+import { hashPassword } from '@/utils/helpers/auth';
+import PrismaKit from '@/models/classes/prisma';
 export const LoginUser = async (req: NextRequest) => {
   const body: User = await req.json();
-  if (!body) {
+  if (!body.password || !body.username) {
     return ResponseError.default.badRequest();
   }
+
   if (body.email === '' || body.password === '') {
     return ResponseError.custom.badRequest(M.INVALID_PASSWORD_OR_EMAIL);
   }
+
   if (body.username === '' || body.password === '') {
     return ResponseError.custom.badRequest(M.INVALID_PASSWORD_OR_USERNAME);
   }
+
+  if (body.username.length < 0) {
+    return ResponseError.custom.badRequest(M.INVALID_USERNAME);
+  }
   try {
-    if (body.username.length > 0) {
-      const user: User | null = await prisma.user.findUnique({
-        where: { username: body.username },
-      });
-      if (!user) {
-        return ResponseError.custom.unauthorized(
-          'Invalid Username or Password'
-        );
-      }
-      const isValidPassword = await comparePassword(
-        body.password,
-        user.password
-      );
-      if (!isValidPassword) {
-        return ResponseError.custom.unauthorized(
-          M.INVALID_PASSWORD_OR_USERNAME
-        );
-      }
-      const token = await generateToken(user);
-      const refreshToken = await generateRefreshToken(user);
-      LOCAL_STORAGE.token.set(token);
-      LOCAL_STORAGE.refreshToken.set(refreshToken);
-      const userFrontend: UserFrontend = {
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        admin: user.admin ? true : false,
-      };
-      return NextResponse.json({
-        data: userFrontend,
-        message: 'You are logged in.',
-        status: 200,
-      });
+    const user: User | null = await prisma.user.findUnique({
+      where: { username: body.username },
+    });
+    if (!user) {
+      return ResponseError.custom.unauthorized('Invalid Username or Password');
     }
+    console.log(user, 'user', body.password, 'body.password');
+    const isValidPassword = await comparePassword(body.password, user.password);
+    if (!isValidPassword) {
+      return ResponseError.custom.unauthorized(M.INVALID_PASSWORD_OR_USERNAME);
+    }
+
+    const token = await generateToken(user);
+    const refreshToken = await generateRefreshToken(user);
+    const userFrontend: UserFrontend = {
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      admin: user.admin ? true : false,
+    };
+
+    return NextResponse.json(
+      {
+        data: {
+          user: userFrontend,
+          token,
+          refreshToken,
+        },
+        message: 'You are logged in.',
+      },
+      { status: 200 }
+    );
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
@@ -78,21 +83,42 @@ export const registerUser = async (req: NextRequest) => {
     return ResponseError.custom.badRequest(errMessage);
   }
   try {
+    const isUsernameAvailable = await PrismaKit.checkUsernameAvailability(
+      body.username
+    );
+    const isEmailAvailable = await PrismaKit.checkEmailAvailability(body.email);
+    if (!isUsernameAvailable || !isEmailAvailable) {
+      return ResponseError.custom.badRequest(M.INVALID_USERNAME_NOT_AVAILABLE);
+    }
+    const hashedPassword = await hashPassword(body.password);
     const user = await prisma.user.create({
       data: {
         email: body.email,
         username: body.username,
-        password: body.password,
+        password: hashedPassword,
         firstName: body.firstName,
         lastName: body.lastName,
       },
     });
     const token = await generateToken(user);
     const refreshToken = await generateToken(user);
-    LOCAL_STORAGE.token.set(token);
-    LOCAL_STORAGE.refreshToken.set(refreshToken);
 
-    return NextResponse.json({ status: 201 });
+    return NextResponse.json(
+      {
+        data: {
+          user: {
+            username: user.username,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            admin: user.admin ? true : false,
+          },
+          token,
+          refreshToken,
+        },
+      },
+      { status: 201 }
+    );
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
@@ -114,8 +140,7 @@ const refreshTokens = async (req: NextRequest) => {
     }
     const token = await generateToken(decodedUser);
     const newRefreshToken = await generateRefreshToken(decodedUser);
-    LOCAL_STORAGE.token.set(token);
-    LOCAL_STORAGE.refreshToken.set(newRefreshToken);
+
     return NextResponse.json({ status: 200 });
   } catch (err) {
     if (err instanceof Error) {
