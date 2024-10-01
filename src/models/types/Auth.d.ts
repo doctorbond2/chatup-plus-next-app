@@ -15,3 +15,9 @@ export interface RegisterInformation {
   email: string;
 }
 export type AxiosUser = AuthRoles;
+
+export interface User_JWT {
+  username: string;
+  email: string;
+  admin?: boolean;
+}

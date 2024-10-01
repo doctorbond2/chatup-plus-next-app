@@ -1,23 +1,17 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { RegisterInformation } from '@/models/types/Auth';
 import { ValidationMessages } from '@/models/enums/errorMessages';
+import { NextRequest } from 'next/server';
+import { User_JWT } from '@/models/types/Auth';
 const SECRET_KEY = process.env.JWT_SECRET as string;
 const REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET as string;
-export const generateToken = async <
-  T extends { username: string; id: string; admin?: boolean }
->(
-  payload: T
-) => {
+export const generateToken = async <T extends User_JWT>(payload: T) => {
   return jwt.sign(payload, SECRET_KEY as string, {
     expiresIn: '1d',
   });
 };
-export const generateRefreshToken = async <
-  T extends { username: string; id: string; admin?: boolean }
->(
-  payload: T
-) => {
+export const generateRefreshToken = async <T extends User_JWT>(payload: T) => {
   return jwt.sign(payload, REFRESH_SECRET_KEY as string, {
     expiresIn: '1d',
   });
@@ -29,8 +23,21 @@ export const comparePassword = async (password: string, hash: string) => {
   return await bcrypt.compare(password, hash);
 };
 
-export const verifyToken = async (token: string) => {
-  return jwt.verify(token, SECRET_KEY as string);
+export const verifyToken = async (req: NextRequest) => {
+  const token = req.headers.get('Authorization')?.split(' ')[1];
+  if (!token) {
+    return null;
+  }
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY as string);
+    if (typeof decoded === 'string') {
+      return null;
+    }
+    return decoded.id;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
 };
 
 export const verifyRefreshToken = (token: string) => {
@@ -39,7 +46,7 @@ export const verifyRefreshToken = (token: string) => {
     if (typeof decoded === 'string') {
       return null;
     }
-    return decoded.id;
+    return decoded;
   } catch (err) {
     console.log(err);
     return null;

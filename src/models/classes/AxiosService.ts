@@ -1,7 +1,8 @@
-import axios, { AxiosRequestConfig, AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { AxiosUser } from '../types/Auth';
 import { AuthRoles } from '../enums/auth';
-class AxiosService<T extends AxiosUser> {
+import COOKIES from './Cookies';
+class AxiosServiceInstance<T extends AxiosUser> {
   private IS_PROD = process.env.NODE_ENV === 'production';
   private IS_DEV = process.env.NODE_ENV === 'development';
   private BaseUrl =
@@ -17,6 +18,7 @@ class AxiosService<T extends AxiosUser> {
   };
 
   constructor(role: T) {
+    this.setAdminAccess(role === AuthRoles.ADMIN);
     this.api = axios.create({
       baseURL: this.BaseUrl,
       headers: this.headers,
@@ -35,12 +37,21 @@ class AxiosService<T extends AxiosUser> {
       return config;
     });
   }
-  setAdminAccess(isAdmin: boolean) {
+  setAdminAccess(isAdmin: boolean): void {
     this.headers['admin-access'] = isAdmin;
     this.api.defaults.headers['admin-access'] = isAdmin;
   }
-  updateTokens(token: string) {
-    this.headers.Authorization = token;
-    this.api.defaults.headers.Authorization = token;
+  addTokenToHeaders(token: string): void {
+    this.headers.Authorization = `Bearer ${token}`;
+    this.api.defaults.headers.Authorization = `Bearer ${token}`;
+  }
+  checkForTokens(): void {
+    const token: string | null = COOKIES.getToken();
+    if (token) {
+      this.addTokenToHeaders(token);
+    }
   }
 }
+const AdminAxiosService = new AxiosServiceInstance(AuthRoles.ADMIN);
+const AxiosService = new AxiosServiceInstance(AuthRoles.GUEST);
+export { AxiosService, AdminAxiosService };

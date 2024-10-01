@@ -10,10 +10,12 @@ class COOKIES {
     cookies().set('refreshToken', token);
   }
   static getToken() {
-    return cookies().get('token');
+    const token = cookies().get('token');
+    return token ? token.value : null;
   }
   static getRefreshToken() {
-    return cookies().get('refreshToken');
+    const refreshToken = cookies().get('refreshToken');
+    return refreshToken ? refreshToken.value : null;
   }
 }
 export default COOKIES;
