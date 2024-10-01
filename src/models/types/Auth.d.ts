@@ -1,5 +1,8 @@
+import { AuthRoles } from '../enums/auth';
+
 type Token = string;
 type RefreshToken = string;
+
 export interface Auth {
   token?: Token;
   refreshToken?: RefreshToken;
@@ -11,3 +14,4 @@ export interface RegisterInformation {
   password: string;
   email: string;
 }
+export type AxiosUser = AuthRoles;

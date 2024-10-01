@@ -108,16 +108,12 @@ const refreshTokens = async (req: NextRequest) => {
     return ResponseError.custom.unauthorized('No refresh token found');
   }
   try {
-    const decodedId = verifyRefreshToken(refreshToken);
-    if (!decodedId) {
+    const decodedUser = verifyRefreshToken(refreshToken);
+    if (!decodedUser) {
       return ResponseError.custom.unauthorized('Invalid refresh token');
     }
-    const user = await prisma.user.findUnique({ where: { id: decodedId } });
-    if (!user) {
-      return ResponseError.custom.unauthorized('User not found');
-    }
-    const token = await generateToken(user);
-    const newRefreshToken = await generateRefreshToken(user);
+    const token = await generateToken(decodedUser);
+    const newRefreshToken = await generateRefreshToken(decodedUser);
     LOCAL_STORAGE.token.set(token);
     LOCAL_STORAGE.refreshToken.set(newRefreshToken);
     return NextResponse.json({ status: 200 });
