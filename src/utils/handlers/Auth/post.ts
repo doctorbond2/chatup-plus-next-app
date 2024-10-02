@@ -1,9 +1,9 @@
 import prisma from '@/lib/prisma';
-import LOCAL_STORAGE from '@/models/classes/localStorage';
 import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages as M } from '@/models/enums/errorMessages';
 import { RegisterInformation } from '@/models/types/Auth';
 import { UserFrontend } from '@/models/types/User';
+import { hashPassword } from '@/utils/helpers/auth';
 import { User_JWT } from '@/models/types/Auth';
 import {
   comparePassword,
@@ -77,27 +77,41 @@ export const registerUser = async (req: NextRequest) => {
   if (!body) {
     return ResponseError.default.badRequest();
   }
-  const errors = veryifyRegisterInformation(body);
+  const errors = await veryifyRegisterInformation(body);
   if (errors.length > 0) {
     const errMessage = errors.join(', ');
     return ResponseError.custom.badRequest(errMessage);
   }
+  const hashedPassword = await hashPassword(body.password);
   try {
     const user = await prisma.user.create({
       data: {
         email: body.email,
         username: body.username,
-        password: body.password,
+        password: hashedPassword,
         firstName: body.firstName,
         lastName: body.lastName,
       },
     });
     const token = await generateToken(user);
-    const refreshToken = await generateToken(user);
-    LOCAL_STORAGE.token.set(token);
-    LOCAL_STORAGE.refreshToken.set(refreshToken);
+    const refreshToken = await generateRefreshToken(user);
 
-    return NextResponse.json({ status: 201 });
+    const userFrontend: UserFrontend = {
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      admin: user.admin ? true : false,
+    };
+    return NextResponse.json({
+      data: {
+        user: userFrontend,
+        token,
+        refreshToken,
+      },
+      message: 'You are registered.',
+      status: 201,
+    });
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
@@ -128,15 +142,13 @@ export const refreshTokens = async (req: NextRequest) => {
       decodedUser as User_JWT
     );
 
-    return NextResponse.json(
-      {
-        data: {
-          token,
-          refreshToken: newRefreshToken,
-        },
+    return NextResponse.json({
+      data: {
+        token,
+        refreshToken: newRefreshToken,
       },
-      { status: 200 }
-    );
+      status: 200,
+    });
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);

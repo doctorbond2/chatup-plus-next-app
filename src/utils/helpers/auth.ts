@@ -4,6 +4,7 @@ import { RegisterInformation } from '@/models/types/Auth';
 import { ValidationMessages } from '@/models/enums/errorMessages';
 import { NextRequest } from 'next/server';
 import { User_JWT } from '@/models/types/Auth';
+import PrismaKit from '@/models/classes/prisma';
 const SECRET_KEY = process.env.JWT_SECRET as string;
 const REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET as string;
 export const generateToken = async <T extends User_JWT>(payload: T) => {
@@ -52,13 +53,13 @@ export const verifyRefreshToken = (token: string) => {
     return null;
   }
 };
-export const veryifyRegisterInformation = ({
+export const veryifyRegisterInformation = async ({
   username,
   lastName,
   firstName,
   password,
   email,
-}: RegisterInformation): string[] => {
+}: RegisterInformation): Promise<string[]> => {
   const {
     USERNAME_REQUIRED,
     USERNAME_TOO_SHORT,
@@ -66,6 +67,8 @@ export const veryifyRegisterInformation = ({
     FIRST_NAME_REQUIRED,
     PASSWORD_REQUIRED,
     EMAIL_REQUIRED,
+    INVALID_USERNAME_NOT_AVAILABLE,
+    INVALID_EMAIL_NOT_AVAILABLE,
   } = ValidationMessages;
   const errors: string[] = [];
   if (!username) {
@@ -84,6 +87,14 @@ export const veryifyRegisterInformation = ({
   }
   if (!email) {
     errors.push(EMAIL_REQUIRED);
+  }
+  const usernameAvailable = await PrismaKit.checkUsernameAvailability(username);
+  if (!usernameAvailable) {
+    errors.push(INVALID_USERNAME_NOT_AVAILABLE);
+  }
+  const emailAvailable = await PrismaKit.checkEmailAvailability(email);
+  if (!emailAvailable) {
+    errors.push(INVALID_EMAIL_NOT_AVAILABLE);
   }
   return errors;
 };

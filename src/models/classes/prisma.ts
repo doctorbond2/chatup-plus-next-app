@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-class PrismaKit<T> {
+class PrismaKit {
   contructor() {}
 
   static checkUsernameAvailability = async (

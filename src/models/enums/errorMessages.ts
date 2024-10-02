@@ -13,4 +13,5 @@ export const ValidationMessages = {
   INVALID_TOKEN: 'Invalid Token',
   INVALID_USERNAME: 'Invalid Username',
   INVALID_USERNAME_NOT_AVAILABLE: 'Username is not available',
+  INVALID_EMAIL_NOT_AVAILABLE: 'Email is not available',
 };
