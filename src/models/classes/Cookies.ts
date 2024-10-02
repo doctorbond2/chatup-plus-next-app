@@ -1,21 +1,31 @@
-import { cookies } from 'next/headers';
+import Cookies from 'js-cookie';
+
 class COOKIES {
   constructor() {}
-  private static cookie_storage: string[] = [];
 
   static setToken(token: string) {
-    cookies().set('token', token);
+    Cookies.set('token', token, { expires: 7 });
   }
-  static setRefreshToken(token: string) {
-    cookies().set('refreshToken', token);
+
+  static setRefreshToken(refreshToken: string) {
+    Cookies.set('refreshToken', refreshToken, { expires: 7 });
   }
-  static getToken() {
-    const token = cookies().get('token');
-    return token ? token.value : null;
+
+  static getToken(): string | null {
+    return Cookies.get('token') || null;
   }
-  static getRefreshToken() {
-    const refreshToken = cookies().get('refreshToken');
-    return refreshToken ? refreshToken.value : null;
+
+  static getRefreshToken(): string | null {
+    return Cookies.get('refreshToken') || null;
+  }
+
+  static clearToken() {
+    Cookies.remove('token');
+  }
+
+  static clearRefreshToken() {
+    Cookies.remove('refreshToken');
   }
 }
+
 export default COOKIES;

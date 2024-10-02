@@ -1,25 +1,21 @@
 'use client';
-import axios from 'axios';
+import { useUserContext } from '@/context/UserContext';
+import { LoginInformation } from '@/models/types/Auth';
 export default function Page() {
+  const { login } = useUserContext();
   return (
     <form
       onSubmit={async (event) => {
         event.preventDefault();
         const formData = new FormData(event.target as HTMLFormElement);
-        const data = Object.fromEntries(formData.entries());
-        axios
-          .post('/api/todos', data)
-          .then((response) => {
-            console.log(response.status);
-            console.log(response.data);
-          })
-          .catch((error) => {
-            console.error(error);
-          });
+        const data: any = Object.fromEntries(formData.entries());
+        await login(data as any);
       }}
     >
       <label>Name</label>
-      <input name="name"></input>
+      <input name="username"></input>
+      <label>Password</label>
+      <input name="password"></input>
       <button type="submit">Submit</button>
     </form>
   );

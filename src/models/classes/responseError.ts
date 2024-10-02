@@ -21,6 +21,7 @@ class ResponseError {
     notFound: () => returnError(Codes.NOT_FOUND),
     badRequest: () => returnError(Codes.BAD_REQUEST),
     unauthorized: () => returnError(Codes.UNAUTHORIZED),
+    invalidToken: () => returnError(Codes.UNAUTHORIZED, 'Invalid token'),
     forbidden: () => returnError(Codes.FORBIDDEN),
     internalServerError: () => returnError(Codes.INTERNAL_SERVER_ERROR),
   };

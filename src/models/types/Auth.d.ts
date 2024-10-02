@@ -21,3 +21,15 @@ export interface User_JWT {
   email: string;
   admin?: boolean;
 }
+export interface LoginInformation {
+  username?: string;
+  email?: string;
+  password: string;
+}
+export interface UpdateProfileInformation {
+  username?: string;
+  lastName?: string;
+  firstName?: string;
+  password?: string;
+  email?: string;
+}

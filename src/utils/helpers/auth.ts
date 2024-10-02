@@ -26,6 +26,7 @@ export const comparePassword = async (password: string, hash: string) => {
 
 export const verifyToken = async (req: NextRequest) => {
   const token = req.headers.get('Authorization')?.split(' ')[1];
+  console.log('TOKEN: ', token);
   if (!token) {
     return null;
   }
@@ -98,3 +99,16 @@ export const veryifyRegisterInformation = async ({
   }
   return errors;
 };
+export const validateApiKey = (req: NextRequest) => {
+  const validApiKey = process.env.API_KEY || '';
+  const apiKey = req.headers.get('x-api-key');
+  console.log('API KEY: ', apiKey);
+  console.log('VALID API KEY: ', validApiKey);
+  if (!apiKey || apiKey !== validApiKey || validApiKey === '') {
+    console.log('ooops');
+    return false;
+  }
+  return true;
+};
+
+const errorResponseInterceptor = (error: any) => {};

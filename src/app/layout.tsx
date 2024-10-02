@@ -1,18 +1,6 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
 import './globals.css';
-
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-});
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
-});
-
+import UserContextProvider from '@/context/UserContext';
 export const metadata: Metadata = {
   title: 'Chatup-plus',
   description: 'Next version of chatup application',
@@ -25,12 +13,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <header></header>
-        {children}
-        <footer></footer>
+      <body>
+        <UserContextProvider>
+          <header></header>
+
+          {children}
+
+          <footer></footer>
+        </UserContextProvider>
       </body>
     </html>
   );
