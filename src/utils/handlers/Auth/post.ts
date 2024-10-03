@@ -54,11 +54,10 @@ export const LoginUser = async (req: NextRequest) => {
         admin: user.admin ? true : false,
       };
       return NextResponse.json({
-        data: {
-          user: userFrontend,
-          token,
-          refreshToken,
-        },
+        user: userFrontend,
+        token,
+        refreshToken,
+
         message: 'You are logged in.',
         status: 200,
       });

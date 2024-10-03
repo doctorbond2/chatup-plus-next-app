@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import UserContextProvider from '@/context/UserContext';
+import AxiosProvider from '@/context/AxiosContext';
 export const metadata: Metadata = {
   title: 'Chatup-plus',
   description: 'Next version of chatup application',
@@ -14,13 +15,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <UserContextProvider>
-          <header></header>
+        <AxiosProvider>
+          <UserContextProvider>
+            <header></header>
 
-          {children}
+            {children}
 
-          <footer></footer>
-        </UserContextProvider>
+            <footer></footer>
+          </UserContextProvider>
+        </AxiosProvider>
       </body>
     </html>
   );

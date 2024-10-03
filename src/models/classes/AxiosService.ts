@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable no-var */
 import axios, {
   AxiosInstance,
   AxiosError,
@@ -10,7 +12,7 @@ import COOKIES from './Cookies';
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
-class AxiosServiceInstance<T extends AxiosUser> {
+class AxiosService<T extends AxiosUser> {
   private IS_PROD = process.env.NODE_ENV === 'production';
   private IS_DEV = process.env.NODE_ENV === 'development';
 
@@ -32,9 +34,10 @@ class AxiosServiceInstance<T extends AxiosUser> {
       baseURL: this.BaseUrl,
       headers: this.headers,
     });
-
+    console.log('starting contructor');
     this.setAdminAccess(role === AuthRoles.ADMIN);
     this.setApiKey(role === AuthRoles.ADMIN || role === AuthRoles.USER);
+
     this.checkForTokens();
     if (role === AuthRoles.ADMIN || role === AuthRoles.USER) {
       this.api.interceptors.response.use(
@@ -66,11 +69,8 @@ class AxiosServiceInstance<T extends AxiosUser> {
   }
   checkForTokens(): void {
     const token: string | null = COOKIES.getToken();
-    if (token) {
-      console.log('Token found in cookies, adding to headers');
+    if (token && token !== 'undefined' && token !== 'null' && token !== '') {
       this.addTokenToHeaders(token);
-    } else {
-      console.log('No token found in cookies');
     }
   }
   private errorInterceptorRefreshToken = async (error: AxiosError) => {
@@ -132,8 +132,5 @@ class AxiosServiceInstance<T extends AxiosUser> {
     return this.api.delete(url);
   };
 }
-const AdminAxiosService = new AxiosServiceInstance(AuthRoles.ADMIN);
-const GuestAxiosService = new AxiosServiceInstance(AuthRoles.GUEST);
 
-const UserAxiosService = new AxiosServiceInstance(AuthRoles.USER);
-export { GuestAxiosService, AdminAxiosService, UserAxiosService };
+export default AxiosService;

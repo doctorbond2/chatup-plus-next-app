@@ -5,14 +5,13 @@ import { UserContextInterface } from '@/models/types/User';
 import { defaultUserContextInterface } from '@/models/types/defaultValues/User';
 import { UserFrontend } from '@/models/types/User';
 import { useState } from 'react';
-import { GuestAxiosService } from '@/models/classes/AxiosService';
+import { useAxios } from './AxiosContext';
 import COOKIES from '@/models/classes/Cookies';
 import {
   RegisterInformation,
   LoginInformation,
   UpdateProfileInformation,
 } from '@/models/types/Auth';
-import { redirect } from 'next/navigation';
 
 const userContext = createContext<UserContextInterface>(
   defaultUserContextInterface
@@ -23,11 +22,13 @@ export const useUserContext = () => useContext(userContext);
 const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<UserFrontend | null>(null);
-
+  const { guest_request } = useAxios();
   async function login(formData: LoginInformation): Promise<void> {
     try {
-      const response = await GuestAxiosService.post('/auth/login', formData);
-      const { user, token, refreshToken } = response.data;
+      const response = await guest_request.post('/auth/login', formData);
+      const { data } = response;
+      const { user, token, refreshToken } = data;
+      console.log(response.data);
       setUser(user);
       COOKIES.setToken(token);
       COOKIES.setRefreshToken(refreshToken);
@@ -40,10 +41,16 @@ const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
   async function register(formData: RegisterInformation): Promise<void> {
-    console.log('Register');
+    try {
+      const response = await guest_request.post('/auth/register', formData);
+      console.log(response.data);
+      router.push('/login');
+    } catch (err) {
+      console.log('Error registering:', err);
+    }
   }
   async function update(formData: UpdateProfileInformation): Promise<void> {
-    console.log('Update');
+    console.log('Update: ', formData);
   }
   async function logout(): Promise<void> {
     COOKIES.clearRefreshToken();
