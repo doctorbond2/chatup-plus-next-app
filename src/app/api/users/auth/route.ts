@@ -1,5 +1,5 @@
 import ResponseError from '@/models/classes/responseError';
 
-export function GET() {
+export async function GET(): Promise<Response> {
   return ResponseError.default.unauthorized();
 }

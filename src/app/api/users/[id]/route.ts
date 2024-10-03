@@ -5,7 +5,7 @@ import ResponseError from '@/models/classes/responseError';
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   const AUTH = await middleware_authenticate_request(req);
   if (AUTH.hasErrors) {
     return ResponseError.custom.unauthorized(AUTH.errors.join(', '));
@@ -15,7 +15,7 @@ export async function GET(
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   const asd: number = parseInt(params.id);
   console.log(asd);
   const body: User = await req.json();
