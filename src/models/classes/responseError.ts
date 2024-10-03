@@ -6,10 +6,10 @@ import {
 
 type GetError = (statusCode: Codes, message?: string) => NextResponse;
 const createError = (statusCode: Codes, message?: string): NextResponse => {
-  return NextResponse.json(
-    { message: message || Messages[statusCode] },
-    { status: statusCode }
-  );
+  return NextResponse.json({
+    message: message || Messages[statusCode],
+    status: statusCode,
+  });
 };
 const returnError: GetError = createError;
 
