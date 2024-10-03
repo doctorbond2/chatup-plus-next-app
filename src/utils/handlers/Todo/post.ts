@@ -8,7 +8,6 @@ export async function CreateTodo(req: NextRequest) {
     if (!body.name) {
       return ResponseError.default.badRequest();
     }
-
     body.completed = false;
     await prisma.todo.create({ data: body });
     return NextResponse.json(body, { status: 201 });
