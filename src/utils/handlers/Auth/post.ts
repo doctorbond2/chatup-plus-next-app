@@ -26,55 +26,49 @@ export const LoginUser = async (req: NextRequest) => {
     return ResponseError.custom.badRequest(M.INVALID_PASSWORD_OR_USERNAME);
   }
   try {
-    if (body.username.length > 0) {
-      const user: User | null = await prisma.user.findUnique({
-        where: { username: body.username },
-      });
-      if (!user) {
-        return ResponseError.custom.unauthorized(
-          'Invalid Username or Password'
-        );
-      }
-      const isValidPassword = await comparePassword(
-        body.password,
-        user.password
-      );
-      if (!isValidPassword) {
-        return ResponseError.custom.unauthorized(
-          M.INVALID_PASSWORD_OR_USERNAME
-        );
-      }
-      const token = await generateToken(user);
-      const refreshToken = await generateRefreshToken(user);
-      const userFrontend: UserFrontend = {
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        admin: user.admin ? true : false,
-      };
-      return NextResponse.json({
-        user: userFrontend,
-        token,
-        refreshToken,
-
-        message: 'You are logged in.',
-        status: 200,
-      });
+    if (body.username.length <= 0) {
+      return ResponseError.custom.badRequest(M.INVALID_USERNAME);
     }
+    const user: User | null = await prisma.user.findUnique({
+      where: { username: body.username },
+    });
+    if (!user) {
+      return ResponseError.custom.unauthorized('Invalid Username or Password');
+    }
+    const isValidPassword = await comparePassword(body.password, user.password);
+    if (!isValidPassword) {
+      return ResponseError.custom.unauthorized(M.INVALID_PASSWORD_OR_USERNAME);
+    }
+    const token = await generateToken(user);
+    const refreshToken = await generateRefreshToken(user);
+    const userFrontend: UserFrontend = {
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      admin: user.admin ? true : false,
+    };
+    return NextResponse.json({
+      user: userFrontend,
+      token,
+      refreshToken,
+
+      message: 'You are logged in.',
+      status: 200,
+    });
   } catch (err) {
     if (err instanceof Error) {
       console.log(err.message);
     } else {
       console.log(String(err));
     }
-    return ResponseError.default.internalServerError;
+    return ResponseError.default.internalServerError();
   }
 };
 export const registerUser = async (req: NextRequest) => {
   const body: RegisterInformation = await req.json();
   if (!body) {
-    return ResponseError.default.badRequest();
+    return ResponseError.default.badRequest;
   }
   const errors = await veryifyRegisterInformation(body);
   if (errors.length > 0) {
@@ -117,7 +111,7 @@ export const registerUser = async (req: NextRequest) => {
     } else {
       console.log(String(err));
     }
-    return ResponseError.default.internalServerError();
+    return ResponseError.default.internalServerError;
   }
 };
 export const refreshTokens = async (req: NextRequest) => {
