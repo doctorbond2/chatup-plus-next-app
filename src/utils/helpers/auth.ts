@@ -110,5 +110,3 @@ export const validateApiKey = (req: NextRequest) => {
   }
   return true;
 };
-
-const errorResponseInterceptor = (error: any) => {};

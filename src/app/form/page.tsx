@@ -8,8 +8,12 @@ export default function Page() {
       onSubmit={async (event) => {
         event.preventDefault();
         const formData = new FormData(event.target as HTMLFormElement);
-        const data: any = Object.fromEntries(formData.entries());
-        await login(data as any);
+        const data = Object.fromEntries(formData.entries());
+        const loginData: LoginInformation = {
+          username: data.username as string,
+          password: data.password as string,
+        };
+        await login(loginData);
       }}
     >
       <label>Name</label>
