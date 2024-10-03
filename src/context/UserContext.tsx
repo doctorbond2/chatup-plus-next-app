@@ -5,7 +5,6 @@ import { UserContextInterface } from '@/models/types/User';
 import { defaultUserContextInterface } from '@/models/types/defaultValues/User';
 import { UserFrontend } from '@/models/types/User';
 import { useState } from 'react';
-import { useAxios } from './AxiosContext';
 import COOKIES from '@/models/classes/Cookies';
 import {
   RegisterInformation,
@@ -22,7 +21,6 @@ export const useUserContext = () => useContext(userContext);
 const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<UserFrontend | null>(null);
-  const { guest_request } = useAxios();
   async function login(formData: LoginInformation): Promise<void> {
     try {
       const response = await guest_request.post('/auth/login', formData);
