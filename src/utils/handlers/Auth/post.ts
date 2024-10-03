@@ -14,7 +14,7 @@ import {
 } from '@/utils/helpers/auth';
 import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
-export const LoginUser = async (req: NextRequest) => {
+export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
   if (!body) {
     return ResponseError.default.badRequest();
@@ -65,10 +65,10 @@ export const LoginUser = async (req: NextRequest) => {
     return ResponseError.default.internalServerError();
   }
 };
-export const registerUser = async (req: NextRequest) => {
+export const registerUser = async (req: NextRequest): Promise<Response> => {
   const body: RegisterInformation = await req.json();
   if (!body) {
-    return ResponseError.default.badRequest;
+    return ResponseError.default.badRequest();
   }
   const errors = await veryifyRegisterInformation(body);
   if (errors.length > 0) {
@@ -111,10 +111,10 @@ export const registerUser = async (req: NextRequest) => {
     } else {
       console.log(String(err));
     }
-    return ResponseError.default.internalServerError;
+    return ResponseError.default.internalServerError();
   }
 };
-export const refreshTokens = async (req: NextRequest) => {
+export const refreshTokens = async (req: NextRequest): Promise<Response> => {
   const body = await req.json();
 
   if (!body.refreshToken) {

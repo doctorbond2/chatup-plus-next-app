@@ -4,8 +4,8 @@ import {
   StatusMessages as Messages,
 } from '@/models/enums/statusCodes';
 
-type GetError = (statusCode: Codes, message?: string) => NextResponse;
-const createError = (statusCode: Codes, message?: string): NextResponse => {
+type GetError = (statusCode: Codes, message?: string) => Response;
+const createError = (statusCode: Codes, message?: string): Response => {
   return NextResponse.json({
     message: message || Messages[statusCode],
     status: statusCode,
