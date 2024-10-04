@@ -3,10 +3,9 @@ import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages as M } from '@/models/enums/errorMessages';
 import { RegisterInformation } from '@/models/types/Auth';
 import { UserFrontend } from '@/models/types/User';
-import { hashPassword } from '@/utils/helpers/auth';
-import { User_JWT } from '@/models/types/Auth';
+import { hashPassword, comparePassword } from '@/utils/helpers/password';
+import { validateLoginBody } from '@/utils/helpers/auth';
 import {
-  comparePassword,
   generateRefreshToken,
   generateToken,
   verifyRefreshToken,
@@ -16,24 +15,17 @@ import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
-  if (!body) {
-    return ResponseError.default.badRequest();
+  const authCheck = validateLoginBody(body);
+  if (authCheck !== true) {
+    return authCheck;
   }
-  if (body.email === '' || body.password === '') {
-    return ResponseError.custom.badRequest(M.INVALID_PASSWORD_OR_EMAIL);
-  }
-  if (body.username === '' || body.password === '') {
-    return ResponseError.custom.badRequest(M.INVALID_PASSWORD_OR_USERNAME);
-  }
+
   try {
-    if (body.username.length <= 0) {
-      return ResponseError.custom.badRequest(M.INVALID_USERNAME);
-    }
     const user: User | null = await prisma.user.findUnique({
       where: { username: body.username },
     });
     if (!user) {
-      return ResponseError.custom.unauthorized('Invalid Username or Password');
+      return ResponseError.custom.notFound(M.USER_NOT_FOUND);
     }
     const isValidPassword = await comparePassword(body.password, user.password);
     if (!isValidPassword) {
@@ -125,16 +117,14 @@ export const refreshTokens = async (req: NextRequest): Promise<Response> => {
   const { refreshToken } = body;
 
   try {
-    const decodedUser = verifyRefreshToken(refreshToken);
+    const decodedUser = await verifyRefreshToken(refreshToken);
     if (!decodedUser) {
       return ResponseError.custom.unauthorized('Invalid refresh token');
     }
 
-    const token: string = await generateToken(decodedUser as User_JWT);
+    const token: string = await generateToken(decodedUser);
 
-    const newRefreshToken: string = await generateRefreshToken(
-      decodedUser as User_JWT
-    );
+    const newRefreshToken: string = await generateRefreshToken(decodedUser);
 
     return NextResponse.json({
       data: {

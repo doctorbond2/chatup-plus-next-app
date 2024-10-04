@@ -1,54 +1,83 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
-import { RegisterInformation } from '@/models/types/Auth';
+import * as jose from 'jose';
+import { RegisterInformation, ValidationErrors } from '@/models/types/Auth';
+import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
-import { NextRequest } from 'next/server';
-import { User_JWT } from '@/models/types/Auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { UpdateProfileInformation } from '@/models/types/Auth';
+import { DB_Updated_User } from '@/models/types/Database';
+
+import { LoginInformation } from '@/models/types/Auth';
 import PrismaKit from '@/models/classes/prisma';
 const SECRET_KEY = process.env.JWT_SECRET as string;
 const REFRESH_SECRET_KEY = process.env.JWT_REFRESH_SECRET as string;
-export const generateToken = async <T extends User_JWT>(payload: T) => {
-  return jwt.sign(payload, SECRET_KEY as string, {
-    expiresIn: '1d',
-  });
-};
-export const generateRefreshToken = async <T extends User_JWT>(payload: T) => {
-  return jwt.sign(payload, REFRESH_SECRET_KEY as string, {
-    expiresIn: '1d',
-  });
-};
-export const hashPassword = async (password: string) => {
-  return await bcrypt.hash(password, 10);
-};
-export const comparePassword = async (password: string, hash: string) => {
-  return await bcrypt.compare(password, hash);
+export const generateToken = async (
+  payload: jose.JWTPayload
+): Promise<string> => {
+  const secret = new TextEncoder().encode(SECRET_KEY);
+
+  const token = await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1d')
+    .sign(secret);
+
+  return token;
 };
 
-export const verifyToken = async (req: NextRequest) => {
+export const generateRefreshToken = async (
+  payload: jose.JWTPayload
+): Promise<string> => {
+  const refreshSecret = new TextEncoder().encode(REFRESH_SECRET_KEY);
+
+  const token = await new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1d')
+    .sign(refreshSecret);
+
+  return token;
+};
+
+export const verifyToken = async (req: NextRequest): Promise<string | null> => {
   const token = req.headers.get('Authorization')?.split(' ')[1];
   console.log('TOKEN: ', token);
+
   if (!token) {
     return null;
   }
+
   try {
-    const decoded = jwt.verify(token, SECRET_KEY as string);
-    if (typeof decoded === 'string') {
+    const secret = new TextEncoder().encode(SECRET_KEY);
+
+    const { payload } = await jose.jwtVerify(token, secret);
+
+    if (typeof payload !== 'object' || !payload.id) {
       return null;
     }
-    return decoded.id;
+
+    return payload.id as string;
   } catch (err) {
     console.log(err);
     return null;
   }
 };
-
-export const verifyRefreshToken = (token: string) => {
+export const verifyAdminAccess = async (req: NextRequest): Promise<boolean> => {
+  const isAdmin = req.headers.get('admin-access');
+  return isAdmin === 'true';
+};
+export const verifyRefreshToken = async (
+  token: string
+): Promise<jose.JWTPayload | null> => {
   try {
-    const decoded = jwt.verify(token, REFRESH_SECRET_KEY as string);
-    if (typeof decoded === 'string') {
+    const secret = new TextEncoder().encode(REFRESH_SECRET_KEY);
+
+    const { payload } = await jose.jwtVerify(token, secret);
+
+    if (typeof payload !== 'object') {
       return null;
     }
-    return decoded;
+
+    return payload;
   } catch (err) {
     console.log(err);
     return null;
@@ -109,4 +138,51 @@ export const validateApiKey = (req: NextRequest) => {
     return false;
   }
   return true;
+};
+export const validateLoginBody = (body: LoginInformation) => {
+  const errors: ValidationErrors = {};
+
+  if (body.email === '' || body.password === '') {
+    errors.password_or_email = ValidationMessages.INVALID_PASSWORD_OR_EMAIL;
+  }
+  if (body.username === '' || body.password === '') {
+    errors.password_or_username =
+      ValidationMessages.INVALID_PASSWORD_OR_USERNAME;
+  }
+  return [Object.keys(errors).length > 0, errors];
+};
+export const validateUpdateProfileBody = async (
+  body: UpdateProfileInformation
+): Promise<[boolean, Response]> => {
+  const errors: ValidationErrors = {};
+  if (!body.existing_password || !body.existing_username) {
+    return [true, ResponseError.custom.badRequest('Missing required fields')];
+  }
+  if (!body.existing_username.trim()) {
+    errors.existing_username = ValidationMessages.USERNAME_REQUIRED;
+  }
+  if (!body.existing_password.trim()) {
+    errors.existing_password = ValidationMessages.PASSWORD_REQUIRED;
+  }
+  try {
+    if (body.username) {
+      const available = PrismaKit.checkUsernameAvailability(body.username);
+      if (!available) {
+        errors.username = ValidationMessages.INVALID_USERNAME_NOT_AVAILABLE;
+      }
+    }
+
+    if (body.email) {
+      const available = PrismaKit.checkEmailAvailability(body.email);
+      if (!available) {
+        errors.email = ValidationMessages.INVALID_EMAIL_NOT_AVAILABLE;
+      }
+    }
+  } catch {
+    return [true, ResponseError.default.internalServerError()];
+  }
+  return [
+    Object.keys(errors).length > 0,
+    NextResponse.json({ errors }, { status: 400 }),
+  ];
 };

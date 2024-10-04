@@ -4,7 +4,7 @@ import { useContext, createContext } from 'react';
 import { UserContextInterface } from '@/models/types/User';
 import { defaultUserContextInterface } from '@/models/types/defaultValues/User';
 import { UserFrontend } from '@/models/types/User';
-import { GuestService } from '@/app/utils/AxiosServiceV4';
+import AxiosService from '@/app/utils/AxiosServiceV4';
 import { useState } from 'react';
 import COOKIES from '@/models/classes/Cookies';
 import {
@@ -12,6 +12,7 @@ import {
   LoginInformation,
   UpdateProfileInformation,
 } from '@/models/types/Auth';
+import { AuthRoles } from '@/models/enums/auth';
 
 const userContext = createContext<UserContextInterface | null>(
   defaultUserContextInterface
@@ -27,6 +28,7 @@ export const useUserContext = () => {
 
 const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
+  const [GuestService] = useState(new AxiosService(AuthRoles.GUEST));
   const [user, setUser] = useState<UserFrontend | null>(null);
   async function login(formData: LoginInformation): Promise<void> {
     try {

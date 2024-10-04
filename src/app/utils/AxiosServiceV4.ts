@@ -136,3 +136,4 @@ const UserService = new AxiosService(AuthRoles.USER);
 const AdminService = new AxiosService(AuthRoles.ADMIN);
 
 export { GuestService, UserService, AdminService };
+export default AxiosService;
