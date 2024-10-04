@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import UserContextProvider from '@/context/UserContext';
-import AxiosProvider from '@/context/AxiosContext';
+import FooterLayout from '@/components/client/footer/FooterLayout';
 export const metadata: Metadata = {
   title: 'Chatup-plus',
   description: 'Next version of chatup application',
@@ -15,15 +15,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AxiosProvider>
-          <UserContextProvider>
-            <header></header>
+        <UserContextProvider>
+          <header></header>
 
-            {children}
+          {children}
 
-            <footer></footer>
-          </UserContextProvider>
-        </AxiosProvider>
+          <FooterLayout />
+        </UserContextProvider>
       </body>
     </html>
   );

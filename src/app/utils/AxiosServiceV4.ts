@@ -1,13 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-var */
 import axios, {
   AxiosInstance,
   AxiosError,
   InternalAxiosRequestConfig,
 } from 'axios';
-import { AxiosUser } from '../types/Auth';
-import { AuthRoles } from '../enums/auth';
-import COOKIES from './Cookies';
+import { AxiosUser } from '@/models/types/Auth';
+import { AuthRoles } from '@/models/enums/auth';
+import COOKIES from '@/models/classes/Cookies';
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -63,13 +61,14 @@ class AxiosService<T extends AxiosUser> {
     }
     this.headers['x-api-key'] = process.env.API_KEY;
   }
-  addTokenToHeaders(token: string): void {
+  private addTokenToHeaders(token: string): void {
     this.headers.Authorization = `Bearer ${token}`;
     this.api.defaults.headers.Authorization = `Bearer ${token}`;
   }
-  checkForTokens(): void {
+  private checkForTokens(): void {
     const token: string | null = COOKIES.getToken();
     if (token && token !== 'undefined' && token !== 'null' && token !== '') {
+      console.log('token found');
       this.addTokenToHeaders(token);
     }
   }
@@ -132,5 +131,8 @@ class AxiosService<T extends AxiosUser> {
     return this.api.delete(url);
   };
 }
+const GuestService = new AxiosService(AuthRoles.GUEST);
+const UserService = new AxiosService(AuthRoles.USER);
+const AdminService = new AxiosService(AuthRoles.ADMIN);
 
-export default AxiosService;
+export { GuestService, UserService, AdminService };

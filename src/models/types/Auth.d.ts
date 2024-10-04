@@ -13,6 +13,7 @@ export interface RegisterInformation {
   firstName: string;
   password: string;
   email: string;
+  admin?: boolean;
 }
 export type AxiosUser = AuthRoles;
 

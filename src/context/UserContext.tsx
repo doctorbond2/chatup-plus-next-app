@@ -4,6 +4,7 @@ import { useContext, createContext } from 'react';
 import { UserContextInterface } from '@/models/types/User';
 import { defaultUserContextInterface } from '@/models/types/defaultValues/User';
 import { UserFrontend } from '@/models/types/User';
+import { GuestService } from '@/app/utils/AxiosServiceV4';
 import { useState } from 'react';
 import COOKIES from '@/models/classes/Cookies';
 import {
@@ -12,18 +13,24 @@ import {
   UpdateProfileInformation,
 } from '@/models/types/Auth';
 
-const userContext = createContext<UserContextInterface>(
+const userContext = createContext<UserContextInterface | null>(
   defaultUserContextInterface
 );
 
-export const useUserContext = () => useContext(userContext);
+export const useUserContext = () => {
+  const context = useContext(userContext);
+  if (!context) {
+    throw new Error('useUserContext must be used within a UserContextProvider');
+  }
+  return context;
+};
 
 const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const [user, setUser] = useState<UserFrontend | null>(null);
   async function login(formData: LoginInformation): Promise<void> {
     try {
-      const response = await guest_request.post('/auth/login', formData);
+      const response = await GuestService.post('/auth/login', formData);
       const { data } = response;
       const { user, token, refreshToken } = data;
       console.log(response.data);
@@ -40,7 +47,7 @@ const UserContextProvider = ({ children }: { children: React.ReactNode }) => {
   }
   async function register(formData: RegisterInformation): Promise<void> {
     try {
-      const response = await guest_request.post('/auth/register', formData);
+      const response = await GuestService.post('/auth/register', formData);
       console.log(response.data);
       router.push('/login');
     } catch (err) {

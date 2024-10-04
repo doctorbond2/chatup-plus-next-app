@@ -84,6 +84,7 @@ export const registerUser = async (req: NextRequest): Promise<Response> => {
         password: hashedPassword,
         firstName: body.firstName,
         lastName: body.lastName,
+        admin: body.admin ? true : false,
       },
     });
     const token = await generateToken(user);
