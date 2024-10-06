@@ -4,7 +4,6 @@ import ResponseError from '@/models/classes/responseError';
 import { ValidationMessages } from '@/models/enums/errorMessages';
 import { NextRequest, NextResponse } from 'next/server';
 import { UpdateProfileInformation } from '@/models/types/Auth';
-import { DB_Updated_User } from '@/models/types/Database';
 
 import { LoginInformation } from '@/models/types/Auth';
 import PrismaKit from '@/models/classes/prisma';
@@ -18,7 +17,7 @@ export const generateToken = async (
   const token = await new jose.SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1d')
+    .setExpirationTime('1h')
     .sign(secret);
 
   return token;

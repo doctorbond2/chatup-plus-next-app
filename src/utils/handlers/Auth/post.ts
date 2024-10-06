@@ -15,11 +15,10 @@ import { User } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 export const LoginUser = async (req: NextRequest): Promise<Response> => {
   const body: User = await req.json();
-  const authCheck = validateLoginBody(body);
-  if (authCheck !== true) {
-    return authCheck;
+  const [hasErrors, errors] = validateLoginBody(body);
+  if (hasErrors) {
+    return NextResponse.json(errors, { status: 400 });
   }
-
   try {
     const user: User | null = await prisma.user.findUnique({
       where: { username: body.username },

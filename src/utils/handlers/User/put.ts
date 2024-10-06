@@ -13,12 +13,13 @@ export async function updateUser(req: NextRequest): Promise<Response> {
   if (hasError) {
     return errors;
   }
+  const userId = req.cookies.get('userId')?.value;
   try {
     const dbRecord = await prisma.user.findUnique({
       where: { username: body.existing_username },
       select: { id: true, password: true },
     });
-    if (!dbRecord) {
+    if (!dbRecord || dbRecord.id !== userId) {
       return ResponseError.custom.notFound('User not found');
     }
 
@@ -36,7 +37,7 @@ export async function updateUser(req: NextRequest): Promise<Response> {
     });
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (err) {
-    console.log('catch');
+    console.error('Error:', err);
     return ResponseError.default.internalServerError();
   }
 }

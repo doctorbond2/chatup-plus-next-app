@@ -53,3 +53,8 @@ export interface ValidationErrors extends ValidationMessages {
   key?: string;
   body?: string;
 }
+export interface Token {
+  username: string;
+  email: string;
+  admin: boolean;
+}

@@ -20,17 +20,18 @@ import { ValidationMessages as M } from '@/models/enums/errorMessages';
 // };
 export const middleware_authenticate_request = async (
   request: NextRequest
-): Promise<[boolean, ValidationErrors]> => {
+): Promise<[boolean, ValidationErrors, string | null]> => {
   const errors: ValidationErrors = {};
-  const tokenOK = await verifyToken(request);
-  const keyOK = validateApiKey(request);
-  if (!tokenOK) {
+  const userId = await verifyToken(request);
+  console.log('tokenId', userId);
+  const key = validateApiKey(request);
+  if (!userId) {
     errors.token = M.INVALID_TOKEN;
   }
-  if (!keyOK) {
+  if (!key) {
     errors.key = M.INVALID_KEY;
   }
-  return [Object.keys(errors).length > 0, errors];
+  return [Object.keys(errors).length > 0, errors, userId];
 };
 export const middleware_admin_request = async (
   request: NextRequest
